@@ -1,0 +1,28 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Portfolio.Api/Portfolio.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Commands/">
+    <Project Path="src/Modules/Commands/Commands.Application/Commands.Application.csproj" />
+    <Project Path="src/Modules/Commands/Commands.Domain/Commands.Domain.csproj" />
+    <Project Path="src/Modules/Commands/Commands.Endpoints/Commands.Endpoints.csproj" />
+    <Project Path="src/Modules/Commands/Commands.Infrastructure/Commands.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Content/">
+    <Project Path="src/Modules/Content/Content.Application/Content.Application.csproj" />
+    <Project Path="src/Modules/Content/Content.Domain/Content.Domain.csproj" />
+    <Project Path="src/Modules/Content/Content.Endpoints/Content.Endpoints.csproj" />
+    <Project Path="src/Modules/Content/Content.Infrastructure/Content.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Resume/">
+    <Project Path="src/Modules/Resume/Resume.Application/Resume.Application.csproj" />
+    <Project Path="src/Modules/Resume/Resume.Domain/Resume.Domain.csproj" />
+    <Project Path="src/Modules/Resume/Resume.Endpoints/Resume.Endpoints.csproj" />
+    <Project Path="src/Modules/Resume/Resume.Infrastructure/Resume.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/Portfolio.SharedInfrastructure/Portfolio.SharedInfrastructure.csproj" />
+    <Project Path="src/Shared/Portfolio.SharedKernel/Portfolio.SharedKernel.csproj" />
+  </Folder>
+</Solution>
