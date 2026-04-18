@@ -1,0 +1,23 @@
+# Default: auto-normalize
+* text=auto
+
+# Deploy artifacts must keep Unix line endings — they run on Linux
+deploy/*.sh         text eol=lf
+deploy/Caddyfile    text eol=lf
+deploy/*.service    text eol=lf
+
+# Windows-only files
+*.bat               text eol=crlf
+*.cmd               text eol=crlf
+*.ps1               text eol=crlf
+
+# Binary files — never normalize
+*.pdf               binary
+*.png               binary
+*.jpg               binary
+*.JPG               binary
+*.jpeg              binary
+*.gif               binary
+*.ico               binary
+*.woff              binary
+*.woff2             binary

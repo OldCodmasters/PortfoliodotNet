@@ -1,0 +1,50 @@
+# /etc/caddy/Caddyfile
+# Caddy 2 — reverse proxy + automatic Let's Encrypt TLS.
+#
+# Root domain (amindehghani.me + www) → Next.js on :3000
+# api.amindehghani.me → .NET API on :5080
+
+{
+	email admin@amindehghani.me
+	# servers {
+	#     protocols h1 h2 h3
+	# }
+}
+
+amindehghani.me, www.amindehghani.me {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+
+	# basic hardening headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/web.access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}
+
+api.amindehghani.me {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:5080
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/api.access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}

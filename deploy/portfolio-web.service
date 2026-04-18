@@ -1,0 +1,26 @@
+[Unit]
+Description=Portfolio Next.js frontend
+After=network.target portfolio-api.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/portfolio/src/frontend
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3000 -H 127.0.0.1
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=portfolio-web
+
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+# sandboxing
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/portfolio/src/frontend
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

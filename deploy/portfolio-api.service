@@ -1,0 +1,33 @@
+[Unit]
+Description=Portfolio .NET API
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/portfolio/api
+ExecStart=/opt/portfolio/api/Portfolio.Api
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=portfolio-api
+
+# Environment — production runtime
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5080
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+Environment=DOTNET_NOLOGO=true
+
+# CORS allow-list (binds to the appsettings Cors:AllowedOrigins array)
+Environment=Cors__AllowedOrigins__0=https://amindehghani.me
+Environment=Cors__AllowedOrigins__1=https://www.amindehghani.me
+
+# sandboxing
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/portfolio/api
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
