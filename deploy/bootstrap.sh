@@ -94,12 +94,24 @@ chmod 440 /etc/sudoers.d/90-portfolio-deploy
 mkdir -p "$APP_ROOT"/{api,src}
 chown -R "$DEPLOY_USER:$DEPLOY_USER" "$APP_ROOT"
 
+# --- clone URL (use GH_TOKEN if set, for private repos) --------------------
+# The token gets baked into .git/config on the server so subsequent
+# `git fetch` during redeploys keeps working. If the repo is made public
+# later, just run `git remote set-url origin https://github.com/.../...git`.
+if [[ -n "${GH_TOKEN:-}" ]]; then
+	CLONE_URL="https://x-access-token:${GH_TOKEN}@github.com/OldCodmasters/PortfoliodotNet.git"
+	echo "--- cloning with GH_TOKEN auth (private repo mode) ---"
+else
+	CLONE_URL="$REPO_URL"
+	echo "--- cloning anonymously (public repo mode) ---"
+fi
+
 # --- clone / update repo (as deploy) ---------------------------------------
-sudo -u "$DEPLOY_USER" bash <<EOSU
+sudo -u "$DEPLOY_USER" CLONE_URL="$CLONE_URL" bash <<'EOSU'
 set -e
-cd "$APP_ROOT"
+cd /opt/portfolio
 if [[ ! -d src/.git ]]; then
-	git clone "$REPO_URL" src
+	git clone "$CLONE_URL" src
 else
 	cd src && git fetch origin && git reset --hard origin/main
 fi
