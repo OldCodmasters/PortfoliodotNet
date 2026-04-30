@@ -16,7 +16,7 @@ export function Header() {
           floats on the right. */}
       <span className="hidden h-9 w-9 sm:block" aria-hidden />
 
-      <div className="glass glass-pill specular flex max-w-xl flex-1 items-center justify-between px-5 py-2 sm:flex-initial">
+      <div className="glass glass-pill specular flex max-w-2xl flex-1 items-center justify-between gap-6 px-6 py-2 sm:flex-initial md:gap-8 md:px-7">
         <button
           type="button"
           onClick={() => goTo("home")}
