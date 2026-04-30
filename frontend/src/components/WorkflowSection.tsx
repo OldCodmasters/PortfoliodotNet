@@ -9,53 +9,21 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FlyIn } from "./FlyIn";
+import type {
+  Machine,
+  MachineShape,
+  Stage,
+  SubStage,
+  Track,
+  TrackId,
+} from "../data/workflow/types";
+import { SOFTWARE_STAGES } from "../data/workflow/software-stages";
+import { HARDWARE_STAGES } from "../data/workflow/hardware-stages";
+import { DatasheetFrame } from "./DatasheetFrame";
 
-/* ------------------------------- data model ------------------------------- */
+/* --------------------------- process-track data --------------------------- */
 
-type MachineShape =
-  | "placer"
-  | "printer"
-  | "oven"
-  | "inspection"
-  | "wave"
-  | "selective"
-  | "rework"
-  | "ict"
-  | "probe"
-  | "fct"
-  | "dispenser"
-  | "lamp"
-  | "router"
-  | "xray";
-
-type Machine = {
-  brand: string;
-  model: string;
-  shape: MachineShape;
-  function: string;
-  how: string;
-  standards: string[];
-};
-
-type SubStage = {
-  id: string;
-  label: string;
-  detail: string;
-  standards: string[];
-  machines?: Machine[];
-};
-
-type Stage = {
-  key: string;
-  label: string;
-  desc: string;
-  overview: string;
-  machines?: Machine[];
-  subStages?: SubStage[];
-  Icon: (props: SVGProps<SVGSVGElement>) => ReactElement;
-};
-
-const STAGES: Stage[] = [
+const PROCESS_STAGES: Stage[] = [
   {
     key: "warehouse",
     label: "Warehouse",
@@ -688,16 +656,49 @@ const STAGES: Stage[] = [
   },
 ];
 
+/* ---------------------------- tracks (top-level) -------------------------- */
+
+const TRACKS: Track[] = [
+  {
+    id: "process",
+    label: "Process Technician",
+    subtitle: "PCBA / SMT manufacturing line",
+    intro:
+      "How a PCB travels through the line I operate — click any stage to zoom in and see the devices that live on it.",
+    stages: PROCESS_STAGES,
+  },
+  {
+    id: "software",
+    label: "Software Engineer",
+    subtitle: "Backend · .NET / Python · cloud-native",
+    intro:
+      "The backend loop I ran at Javanan Sharq and Raimo Studio — click any stage to zoom in on how intent becomes a running, observed service.",
+    stages: SOFTWARE_STAGES,
+  },
+  {
+    id: "hardware",
+    label: "Hardware Maintenance",
+    subtitle: "Corrective · preventive · reliability",
+    intro:
+      "The corrective-and-preventive loop from Vapayesh Sanaat Fars and the maintenance side of the SolarEdge line — click any stage to zoom in on how a machine goes from down to provably back in spec.",
+    stages: HARDWARE_STAGES,
+  },
+];
+
 /* --------------------------- top-level component -------------------------- */
 
 export function WorkflowSection() {
+  const [activeTrackId, setActiveTrackId] = useState<TrackId>("process");
+  const activeTrack = TRACKS.find((t) => t.id === activeTrackId) ?? TRACKS[0];
+  const stages = activeTrack.stages;
+
   const [focusKey, setFocusKey] = useState<string | null>(null);
-  const focusIndex = focusKey ? STAGES.findIndex((s) => s.key === focusKey) : -1;
-  const focusStage = focusIndex >= 0 ? STAGES[focusIndex] : null;
-  const prevStage = focusIndex > 0 ? STAGES[focusIndex - 1] : null;
+  const focusIndex = focusKey ? stages.findIndex((s) => s.key === focusKey) : -1;
+  const focusStage = focusIndex >= 0 ? stages[focusIndex] : null;
+  const prevStage = focusIndex > 0 ? stages[focusIndex - 1] : null;
   const nextStage =
-    focusIndex >= 0 && focusIndex < STAGES.length - 1
-      ? STAGES[focusIndex + 1]
+    focusIndex >= 0 && focusIndex < stages.length - 1
+      ? stages[focusIndex + 1]
       : null;
 
   // While a stage is focused, pause PageShell navigation and remap arrow keys
@@ -711,10 +712,10 @@ export function WorkflowSection() {
         setFocusKey(null);
       } else if (e.key === "ArrowLeft" && focusIndex > 0) {
         e.preventDefault();
-        setFocusKey(STAGES[focusIndex - 1].key);
-      } else if (e.key === "ArrowRight" && focusIndex < STAGES.length - 1) {
+        setFocusKey(stages[focusIndex - 1].key);
+      } else if (e.key === "ArrowRight" && focusIndex < stages.length - 1) {
         e.preventDefault();
-        setFocusKey(STAGES[focusIndex + 1].key);
+        setFocusKey(stages[focusIndex + 1].key);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -722,24 +723,43 @@ export function WorkflowSection() {
       delete document.body.dataset.modalOpen;
       window.removeEventListener("keydown", onKey);
     };
-  }, [focusKey, focusIndex]);
+  }, [focusKey, focusIndex, stages]);
+
+  // Switching tracks while focused would desync the keyboard handler — just
+  // close the overlay on track change.
+  const handleTrackChange = (id: TrackId) => {
+    setFocusKey(null);
+    setActiveTrackId(id);
+  };
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-6xl flex-col">
-      {/* Overview layer: always mounted so FlyIn inheritance stays intact */}
+    <div className="relative h-full w-full">
+      {/* Overview layer: always mounted (kept under the focused overlay)
+          so its FlyIn timeline doesn't restart on every back/forth. The
+          DatasheetFrame supplies the scroll container, fade-y mask, and
+          datasheet chrome shared with every other section. */}
       <div
-        className={`flex h-full flex-col justify-center transition-opacity duration-300 ${
+        className={`absolute inset-0 transition-opacity duration-300 ${
           focusStage ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
-        <OverviewLayout onFocus={setFocusKey} />
+        <DatasheetFrame title="Work Life" sheet={3}>
+          <OverviewLayout
+            track={activeTrack}
+            tracks={TRACKS}
+            onTrackChange={handleTrackChange}
+            onFocus={setFocusKey}
+          />
+        </DatasheetFrame>
       </div>
 
-      {/* Focused overlay */}
+      {/* Focused overlay — fills the same section slot, no datasheet
+          chrome (the focused panel is its own thing with rails). */}
       <AnimatePresence>
         {focusStage && (
           <FocusedLayout
-            key={focusStage.key}
+            key={`${activeTrack.id}-${focusStage.key}`}
+            stages={stages}
             stage={focusStage}
             index={focusIndex}
             prev={prevStage}
@@ -755,53 +775,95 @@ export function WorkflowSection() {
 
 /* ------------------------------- overview -------------------------------- */
 
-function OverviewLayout({ onFocus }: { onFocus: (key: string) => void }) {
+function OverviewLayout({
+  track,
+  tracks,
+  onTrackChange,
+  onFocus,
+}: {
+  track: Track;
+  tracks: Track[];
+  onTrackChange: (id: TrackId) => void;
+  onFocus: (key: string) => void;
+}) {
+  const stages = track.stages;
   return (
     <>
-      <FlyIn index={0}>
-        <h2 className="mb-3 text-4xl font-semibold md:text-5xl">
-          <span className="accent-gradient-text">Workflow</span>
-        </h2>
+      {/* Track tabs — datasheet "options" row directly under the section
+          title block. The h2 has been hoisted into DatasheetFrame so the
+          card here can lead with the interactive track switcher. */}
+      <FlyIn index={3}>
+        <div
+          role="tablist"
+          aria-label="Work-life tracks"
+          className="mb-4 flex flex-wrap gap-1.5 sm:mb-5 sm:gap-2"
+        >
+          {tracks.map((t) => {
+            const isActive = t.id === track.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => onTrackChange(t.id)}
+                className={`glass specular group flex flex-col items-start gap-0.5 px-3 py-1.5 text-left transition-all duration-300 sm:px-4 sm:py-2 ${
+                  isActive
+                    ? "bg-white/[0.06] text-white"
+                    : "text-(--color-foreground-muted) hover:-translate-y-0.5 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                <span className="font-mono text-[9px] uppercase tracking-wider text-(--color-foreground-subtle) group-hover:text-(--color-accent-3) sm:text-[10px]">
+                  {isActive ? "active track" : "switch"}
+                </span>
+                <span className="text-xs font-semibold sm:text-sm">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </FlyIn>
-      <FlyIn index={1}>
-        <p className="mb-8 max-w-2xl text-sm leading-relaxed text-(--color-foreground-muted) md:text-base">
-          How a PCB travels through the line I operate —{" "}
-          <span className="text-(--color-foreground-subtle)">
-            click any stage to zoom in and see the devices that live on it.
-          </span>
+
+      <FlyIn index={2}>
+        <p className="mb-1.5 text-[10px] font-mono uppercase tracking-wider text-(--color-foreground-subtle) sm:mb-2 sm:text-xs">
+          {track.subtitle}
+        </p>
+      </FlyIn>
+      <FlyIn index={3}>
+        <p className="mb-5 max-w-2xl text-xs leading-relaxed text-(--color-foreground-muted) sm:mb-8 sm:text-sm md:text-base">
+          {track.intro}
         </p>
       </FlyIn>
 
-      <div className="flex flex-col items-stretch gap-3 md:flex-row md:items-stretch">
-        {STAGES.map((stage, i) => (
+      <div className="flex flex-col items-stretch gap-2 sm:gap-3 md:flex-row md:items-stretch">
+        {stages.map((stage, i) => (
           <Fragment key={stage.key}>
-            <FlyIn index={i + 2} className="flex-1">
+            <FlyIn index={i + 4} className="flex-1">
               <button
                 type="button"
                 onClick={() => onFocus(stage.key)}
-                className="glass specular group relative flex h-full w-full cursor-pointer flex-col items-center gap-3 p-5 pb-4 text-center transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.04]"
+                className="glass specular group relative flex h-full w-full cursor-pointer flex-col items-center gap-2 p-3 pb-3 text-center transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.04] sm:gap-3 sm:p-5 sm:pb-4"
               >
-                <span className="absolute left-3 top-2 font-mono text-[10px] tracking-wider text-(--color-foreground-subtle)">
+                <span className="absolute left-2.5 top-2 font-mono text-[9px] tracking-wider text-(--color-foreground-subtle) sm:left-3 sm:text-[10px]">
                   0{i + 1}
                 </span>
-                <span className="absolute right-3 top-2 text-(--color-foreground-subtle) transition-colors group-hover:text-(--color-accent-3)">
-                  <ExploreIcon className="h-3.5 w-3.5" />
+                <span className="absolute right-2.5 top-2 text-(--color-foreground-subtle) transition-colors group-hover:text-(--color-accent-3) sm:right-3">
+                  <ExploreIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 </span>
                 <div className="text-(--color-accent-3)">
-                  <stage.Icon width={44} height={44} />
+                  <stage.Icon className="h-8 w-8 sm:h-11 sm:w-11" />
                 </div>
-                <h3 className="text-base font-semibold">{stage.label}</h3>
-                <p className="text-xs leading-relaxed text-(--color-foreground-muted)">
+                <h3 className="text-sm font-semibold sm:text-base">{stage.label}</h3>
+                <p className="text-[11px] leading-relaxed text-(--color-foreground-muted) sm:text-xs">
                   {stage.desc}
                 </p>
-                <span className="mt-auto pt-2 font-mono text-[10px] uppercase tracking-wider text-(--color-foreground-subtle) transition-colors group-hover:text-(--color-accent-3)">
+                <span className="mt-auto pt-1 font-mono text-[9px] uppercase tracking-wider text-(--color-foreground-subtle) transition-colors group-hover:text-(--color-accent-3) sm:pt-2 sm:text-[10px]">
                   zoom in ›
                 </span>
               </button>
             </FlyIn>
-            {i < STAGES.length - 1 && (
+            {i < stages.length - 1 && (
               <FlyIn index={i + 20} className="flex shrink-0 items-center justify-center">
-                <ArrowIcon className="h-6 w-6 rotate-90 text-(--color-foreground-subtle) md:rotate-0" />
+                <ArrowIcon className="h-5 w-5 rotate-90 text-(--color-foreground-subtle) sm:h-6 sm:w-6 md:rotate-0" />
               </FlyIn>
             )}
           </Fragment>
@@ -814,6 +876,7 @@ function OverviewLayout({ onFocus }: { onFocus: (key: string) => void }) {
 /* ------------------------------ focused view ----------------------------- */
 
 function FocusedLayout({
+  stages,
   stage,
   index,
   prev,
@@ -821,6 +884,7 @@ function FocusedLayout({
   onFocusChange,
   onClose,
 }: {
+  stages: Stage[];
   stage: Stage;
   index: number;
   prev: Stage | null;
@@ -836,18 +900,152 @@ function FocusedLayout({
       transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
       className="absolute inset-0 flex flex-col"
     >
-      {/* breadcrumb / close */}
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex items-center gap-2 text-xs text-(--color-foreground-muted) transition hover:text-white"
+      {/* No in-section top chrome — the page header at the top of the
+          viewport is the only thing visible above; the terminal bar at the
+          bottom is the only thing visible below. The focused panel fills
+          everything in between, flanked only by narrow prev/next rails. */}
+      <div className="relative grid flex-1 grid-cols-[2.25rem_1fr_2.25rem] gap-2 overflow-hidden sm:grid-cols-[2.75rem_1fr_2.75rem] sm:gap-3 md:grid-cols-[3rem_1fr_3rem]">
+        <NavRail
+          stage={prev}
+          index={index - 1}
+          direction="left"
+          onClick={prev ? () => onFocusChange(prev.key) : undefined}
+        />
+
+        <ExpandedPanel
+          stages={stages}
+          stage={stage}
+          index={index}
+          prev={prev}
+          next={next}
+          onFocusChange={onFocusChange}
+          onClose={onClose}
+        />
+
+        <NavRail
+          stage={next}
+          index={index + 1}
+          direction="right"
+          onClick={next ? () => onFocusChange(next.key) : undefined}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+/* ----------------------------- nav rail strip ---------------------------- */
+
+function NavRail({
+  stage,
+  index,
+  direction,
+  onClick,
+}: {
+  stage: Stage | null;
+  index: number;
+  direction: "left" | "right";
+  onClick?: () => void;
+}) {
+  // Empty placeholder so the 3-column grid stays balanced when there is no
+  // previous (first stage) or next (last stage) to navigate to.
+  if (!stage || !onClick) {
+    return <div aria-hidden />;
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={`${direction === "left" ? "Previous" : "Next"}: ${stage.label}`}
+      aria-label={`${direction === "left" ? "Previous" : "Next"}: ${stage.label}`}
+      className="glass specular group relative flex h-full w-full flex-col items-center justify-center gap-3 py-3 opacity-60 transition-all duration-300 hover:bg-white/[0.04] hover:opacity-100"
+    >
+      <span className="font-mono text-[9px] tracking-wider text-(--color-foreground-subtle)">
+        0{index + 1}
+      </span>
+      <ArrowIcon
+        className={`h-5 w-5 text-(--color-foreground-muted) transition-colors group-hover:text-(--color-accent-3) ${
+          direction === "left" ? "rotate-180" : ""
+        }`}
+      />
+      <span
+        className="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-(--color-foreground-muted) transition-colors group-hover:text-white sm:inline"
+        style={{ writingMode: "vertical-rl" }}
+      >
+        {stage.label}
+      </span>
+      <span className="font-mono text-[8px] uppercase tracking-wider text-(--color-foreground-subtle)">
+        {direction === "left" ? "prev" : "next"}
+      </span>
+    </button>
+  );
+}
+
+/* -------------------------- expanded stage panel ------------------------- */
+
+function ExpandedPanel({
+  stages,
+  stage,
+  index,
+  prev,
+  next,
+  onFocusChange,
+  onClose,
+}: {
+  stages: Stage[];
+  stage: Stage;
+  index: number;
+  prev: Stage | null;
+  next: Stage | null;
+  onFocusChange: (key: string) => void;
+  onClose: () => void;
+}) {
+  const hasFlow = Boolean(stage.subStages && stage.subStages.length > 0);
+  return (
+    <div
+      className={`relative flex min-h-0 flex-col overflow-hidden ${
+        hasFlow ? "" : "glass glass-solid specular"
+      }`}
+    >
+      {/* Floating close button — keeps the section's top edge clear of any
+          standing chrome bar, so above the panel the only thing visible is
+          the page header. */}
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close stage detail"
+        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.04] text-(--color-foreground-muted) backdrop-blur-sm transition hover:bg-white/[0.12] hover:text-white sm:right-3 sm:top-3"
+      >
+        <CloseIcon className="h-3.5 w-3.5" />
+      </button>
+
+      <header
+        className={
+          hasFlow
+            ? "flex items-center gap-4 pb-3 pr-10"
+            : "flex items-center gap-4 border-b border-white/10 px-6 py-4 pr-12 md:px-7 md:py-5"
+        }
+      >
+        <span className="font-mono text-xs tracking-wider text-(--color-foreground-subtle)">
+          0{index + 1}
+        </span>
+        <div className="text-(--color-accent-3)">
+          <stage.Icon width={36} height={36} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-2xl font-semibold md:text-3xl">
+            <span className="accent-gradient-text">{stage.label}</span>
+          </h2>
+          <p className="truncate text-xs text-(--color-foreground-subtle) md:text-sm">
+            {stage.desc}
+          </p>
+        </div>
+        {/* Slim inline breadcrumb — only on wide viewports, so it never
+            steals a row from the top edge. */}
+        <nav
+          aria-label="Stage breadcrumb"
+          className="hidden shrink-0 items-center gap-1.5 font-mono text-[10px] tracking-wider lg:flex"
         >
-          <CloseIcon className="h-3.5 w-3.5" />
-          <span>back to flow</span>
-        </button>
-        <div className="hidden items-center gap-2 font-mono text-[10px] tracking-wider md:flex">
-          {STAGES.map((s, i) => (
+          {stages.map((s, i) => (
             <Fragment key={s.key}>
               {i > 0 && <span className="text-(--color-foreground-subtle)">›</span>}
               <button
@@ -863,170 +1061,14 @@ function FocusedLayout({
               </button>
             </Fragment>
           ))}
-        </div>
-      </div>
-
-      {/* prev peek | expanded | next peek */}
-      <div className="relative grid flex-1 grid-cols-1 gap-4 overflow-hidden md:grid-cols-[6rem_1fr_6rem] lg:grid-cols-[8rem_1fr_8rem]">
-        {/* left peek column (hidden on mobile) */}
-        <div className="relative hidden md:block">
-          {prev && (
-            <PeekCard
-              stage={prev}
-              index={index - 1}
-              direction="left"
-              onClick={() => onFocusChange(prev.key)}
-            />
-          )}
-        </div>
-
-        {/* expanded center panel */}
-        <ExpandedPanel stage={stage} index={index} prev={prev} next={next} />
-
-        {/* right peek column */}
-        <div className="relative hidden md:block">
-          {next && (
-            <PeekCard
-              stage={next}
-              index={index + 1}
-              direction="right"
-              onClick={() => onFocusChange(next.key)}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* mobile prev/next bar */}
-      <div className="mt-3 flex items-center justify-between md:hidden">
-        <button
-          type="button"
-          disabled={!prev}
-          onClick={() => prev && onFocusChange(prev.key)}
-          className="flex items-center gap-2 text-xs text-(--color-foreground-muted) transition hover:text-white disabled:opacity-30"
-        >
-          <ArrowIcon className="h-3.5 w-3.5 rotate-180" />
-          <span>{prev ? prev.label : "—"}</span>
-        </button>
-        <button
-          type="button"
-          disabled={!next}
-          onClick={() => next && onFocusChange(next.key)}
-          className="flex items-center gap-2 text-xs text-(--color-foreground-muted) transition hover:text-white disabled:opacity-30"
-        >
-          <span>{next ? next.label : "—"}</span>
-          <ArrowIcon className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ---------------------------- peek (half card) --------------------------- */
-
-function PeekCard({
-  stage,
-  index,
-  direction,
-  onClick,
-}: {
-  stage: Stage;
-  index: number;
-  direction: "left" | "right";
-  onClick: () => void;
-}) {
-  // Card is wider than its grid column, anchored to the inner edge;
-  // the outer half is clipped by the grid's overflow-hidden.
-  const positionCls =
-    direction === "left"
-      ? "right-0 hover:-translate-x-1 lg:w-[16rem] w-[14rem]"
-      : "left-0 hover:translate-x-1 lg:w-[16rem] w-[14rem]";
-  const padCls =
-    direction === "left"
-      ? "pl-[7rem] lg:pl-[9rem] pr-5"
-      : "pr-[7rem] lg:pr-[9rem] pl-5";
-  const numPos = direction === "left" ? "right-3" : "left-3";
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`${direction === "left" ? "Previous" : "Next"}: ${stage.label}`}
-      className={`glass specular absolute inset-y-0 ${positionCls} ${padCls} flex flex-col items-center justify-center gap-2 text-center opacity-55 transition-all duration-300 hover:opacity-95`}
-    >
-      <span
-        className={`absolute top-2 ${numPos} font-mono text-[10px] tracking-wider text-(--color-foreground-subtle)`}
-      >
-        0{index + 1}
-      </span>
-      <div className="text-(--color-accent-3)">
-        <stage.Icon width={32} height={32} />
-      </div>
-      <h4 className="text-sm font-semibold">{stage.label}</h4>
-      <span className="mt-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-(--color-foreground-subtle)">
-        {direction === "left" ? (
-          <>
-            <ArrowIcon className="h-3 w-3 rotate-180" />
-            <span>prev</span>
-          </>
-        ) : (
-          <>
-            <span>next</span>
-            <ArrowIcon className="h-3 w-3" />
-          </>
-        )}
-      </span>
-    </button>
-  );
-}
-
-/* -------------------------- expanded stage panel ------------------------- */
-
-function ExpandedPanel({
-  stage,
-  index,
-  prev,
-  next,
-}: {
-  stage: Stage;
-  index: number;
-  prev: Stage | null;
-  next: Stage | null;
-}) {
-  const hasFlow = Boolean(stage.subStages && stage.subStages.length > 0);
-  return (
-    <div
-      className={`relative flex min-h-0 flex-col overflow-hidden ${
-        hasFlow ? "" : "glass glass-solid specular"
-      }`}
-    >
-      <header
-        className={
-          hasFlow
-            ? "flex items-center gap-4 pb-3"
-            : "flex items-center gap-4 border-b border-white/10 px-6 py-4 md:px-7 md:py-5"
-        }
-      >
-        <span className="font-mono text-xs tracking-wider text-(--color-foreground-subtle)">
-          0{index + 1}
-        </span>
-        <div className="text-(--color-accent-3)">
-          <stage.Icon width={36} height={36} />
-        </div>
-        <div className="min-w-0">
-          <h2 className="truncate text-2xl font-semibold md:text-3xl">
-            <span className="accent-gradient-text">{stage.label}</span>
-          </h2>
-          <p className="truncate text-xs text-(--color-foreground-subtle) md:text-sm">
-            {stage.desc}
-          </p>
-        </div>
+        </nav>
       </header>
 
       <div
         className={
           hasFlow
-            ? "terminal-scroll flex-1 overflow-y-auto pr-1"
-            : "terminal-scroll flex-1 overflow-y-auto px-6 py-5 md:px-7 md:py-6"
+            ? "no-scrollbar fade-y flex-1 overflow-y-auto pr-1"
+            : "no-scrollbar fade-y flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 md:px-7 md:py-6"
         }
       >
         {hasFlow ? (
@@ -1136,15 +1178,15 @@ function FlowArrow() {
 
 function SubStageRow({ index, sub }: { index: number; sub: SubStage }) {
   return (
-    <div className="grid gap-3 md:grid-cols-[1fr_20rem] lg:grid-cols-[1fr_22rem] md:gap-4">
-      <div className="glass glass-sm relative flex flex-col gap-2.5 p-4 md:p-5">
+    <div className="grid gap-3 lg:grid-cols-[1fr_20rem] lg:gap-4 xl:grid-cols-[1fr_22rem]">
+      <div className="glass glass-sm relative flex flex-col gap-2 p-3 sm:gap-2.5 sm:p-4 md:p-5">
         <div className="flex items-baseline gap-3">
           <span className="font-mono text-[10px] tracking-wider text-(--color-foreground-subtle)">
             {String(index + 1).padStart(2, "0")}
           </span>
           <h4 className="text-sm font-semibold md:text-base">{sub.label}</h4>
         </div>
-        <p className="text-[12px] leading-relaxed text-(--color-foreground-muted) md:text-[13px]">
+        <p className="text-[11.5px] leading-relaxed text-(--color-foreground-muted) sm:text-[12px] md:text-[13px]">
           {sub.detail}
         </p>
         <div className="flex flex-wrap gap-1.5 pt-1">

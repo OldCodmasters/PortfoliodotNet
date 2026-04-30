@@ -100,38 +100,10 @@ export function PageShell({ portfolio }: { portfolio: Portfolio }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev, goTo]);
 
-  // wheel + touch navigation
-  useEffect(() => {
-    let touchStartY: number | null = null;
-
-    const onWheel = (e: WheelEvent) => {
-      if (document.body.dataset.modalOpen === "true") return;
-      if (Math.abs(e.deltaY) < 8) return;
-      step(e.deltaY > 0 ? 1 : -1);
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (document.body.dataset.modalOpen === "true") return;
-      touchStartY = e.touches[0]?.clientY ?? null;
-    };
-    const onTouchEnd = (e: TouchEvent) => {
-      if (document.body.dataset.modalOpen === "true") return;
-      if (touchStartY == null) return;
-      const endY = e.changedTouches[0]?.clientY ?? touchStartY;
-      const delta = touchStartY - endY;
-      if (Math.abs(delta) > 48) step(delta > 0 ? 1 : -1);
-      touchStartY = null;
-    };
-
-    window.addEventListener("wheel", onWheel, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchend", onTouchEnd);
-    };
-  }, [step]);
+  // Intentional: page-switching via wheel / touch swipe has been removed.
+  // Scrolling now exclusively scrolls the content of the current section.
+  // Section navigation happens via the header, dot-nav, keyboard shortcuts,
+  // and the terminal — all explicit gestures.
 
   const ctxValue = useMemo(() => ({ current, goTo, next, prev }), [current, goTo, next, prev]);
 
@@ -162,7 +134,7 @@ export function PageShell({ portfolio }: { portfolio: Portfolio }) {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="absolute inset-0 flex items-center justify-center px-6 pt-24 pb-44 md:px-12 md:pb-48 lg:px-20"
+            className="absolute inset-0 flex items-stretch justify-center px-3 pt-16 pb-28 sm:px-5 sm:pt-20 sm:pb-36 md:px-8 md:pb-44 lg:px-12 xl:px-16"
           >
             {renderSection(current)}
           </motion.section>

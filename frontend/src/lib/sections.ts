@@ -4,7 +4,7 @@ export type SectionKey = (typeof SECTION_ORDER)[number];
 export const SECTION_LABEL: Record<SectionKey, string> = {
   home: "Home",
   experience: "Experience",
-  workflow: "Workflow",
+  workflow: "My Work Life",
   skills: "Skills",
   awards: "Awards",
 };

@@ -57,6 +57,46 @@
     background: rgba(122, 162, 255, 0.35);
     color: var(--color-foreground);
   }
+
+  /* ── Light theme overrides ─────────────────────────────────────────
+     Same engineering-datasheet vocabulary, just inverted polarity:
+     dark text on a paper-like canvas, glass surfaces become subtle
+     dark-tinted overlays instead of bright-white films, accents step
+     a notch darker so they keep the same perceived contrast. */
+  [data-theme="light"] {
+    --color-canvas: #eef1f7;
+    --color-canvas-elevated: #ffffff;
+    --color-foreground: #0a0d14;
+    /* Bumped from 0.7 → 0.78 so muted body copy stays solidly readable
+       on the bright canvas. Tiny 0.42 → 0.55 bump on subtle so mono
+       labels (Sheet 1/5, S01, Drawn …) don't fade into the paper. */
+    --color-foreground-muted: rgba(10, 13, 20, 0.78);
+    --color-foreground-subtle: rgba(10, 13, 20, 0.55);
+    --color-border-glass: rgba(10, 13, 20, 0.14);
+    --color-border-glass-strong: rgba(10, 13, 20, 0.26);
+    --color-accent: #2f4fb5;
+    --color-accent-2: #7c3aed;
+    --color-accent-3: #0c8a78;
+
+    --shadow-glass:
+      0 1px 0 0 rgba(255, 255, 255, 0.6) inset,
+      0 0 0 1px rgba(14, 16, 21, 0.06) inset,
+      0 18px 36px -22px rgba(14, 16, 21, 0.18),
+      0 6px 18px -10px rgba(14, 16, 21, 0.12);
+  }
+
+  [data-theme="light"] body {
+    background:
+      radial-gradient(1200px 800px at 85% -10%, rgba(59, 98, 204, 0.16), transparent 55%),
+      radial-gradient(900px 700px at 5% 110%, rgba(139, 92, 246, 0.14), transparent 55%),
+      radial-gradient(700px 500px at 50% 50%, rgba(14, 165, 142, 0.08), transparent 60%),
+      var(--color-canvas);
+  }
+
+  [data-theme="light"] ::selection {
+    background: rgba(59, 98, 204, 0.22);
+    color: var(--color-foreground);
+  }
 }
 
 @layer components {
@@ -153,6 +193,110 @@
     background-clip: text;
     color: transparent;
   }
+
+  /* ── Light-mode surface inversions ────────────────────────────────
+     `.glass`, `.glass-solid`, `.specular`, and `.pill-btn` are designed
+     for a dark canvas (white-tinted gradients catch ambient light).
+     Light theme rebuilds them on a white base with subtle dark tints so
+     they read as crisp paper-like cards instead of disappearing into the
+     bright canvas. */
+  [data-theme="light"] .glass {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5)),
+      rgba(255, 255, 255, 0.55);
+    border-color: var(--color-border-glass);
+  }
+
+  [data-theme="light"] .glass::before {
+    background: linear-gradient(
+      180deg,
+      rgba(14, 16, 21, 0.08) 0%,
+      rgba(14, 16, 21, 0.02) 35%,
+      rgba(14, 16, 21, 0) 55%,
+      rgba(14, 16, 21, 0.04) 100%
+    );
+  }
+
+  [data-theme="light"] .glass-solid {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.86)),
+      rgba(255, 255, 255, 0.95);
+  }
+
+  [data-theme="light"] .specular::after {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+
+  [data-theme="light"] .pill-btn {
+    background: linear-gradient(180deg, rgba(14, 16, 21, 0.05), rgba(14, 16, 21, 0.02));
+    border-color: var(--color-border-glass-strong);
+  }
+
+  [data-theme="light"] .pill-btn:hover {
+    background: linear-gradient(180deg, rgba(14, 16, 21, 0.1), rgba(14, 16, 21, 0.04));
+  }
+
+  /* Hairlines / dividers / faint surface overlays — countless components
+     use Tailwind's `bg-white/X` and `border-white/X` for these. On light
+     they would vanish, so we re-color via attribute selectors. The
+     selectors target the most common opacity stops; rare values may
+     still appear pale but the overall feel is preserved. */
+  /* Borders */
+  [data-theme="light"] .border-white\/5  { border-color: rgba(10, 13, 20, 0.08) !important; }
+  [data-theme="light"] .border-white\/10 { border-color: rgba(10, 13, 20, 0.12) !important; }
+  [data-theme="light"] .border-white\/15 { border-color: rgba(10, 13, 20, 0.16) !important; }
+  [data-theme="light"] .border-white\/20 { border-color: rgba(10, 13, 20, 0.22) !important; }
+  [data-theme="light"] .border-white\/40 { border-color: rgba(10, 13, 20, 0.4)  !important; }
+
+  /* Backgrounds — both opacity-stop and arbitrary-value forms */
+  [data-theme="light"] .bg-white\/5  { background-color: rgba(10, 13, 20, 0.05) !important; }
+  [data-theme="light"] .bg-white\/10 { background-color: rgba(10, 13, 20, 0.08) !important; }
+  [data-theme="light"] .bg-white\/20 { background-color: rgba(10, 13, 20, 0.12) !important; }
+  [data-theme="light"] .bg-white\/30 { background-color: rgba(10, 13, 20, 0.22) !important; }
+  [data-theme="light"] .bg-white\/40 { background-color: rgba(10, 13, 20, 0.32) !important; }
+  [data-theme="light"] .bg-white\/60 { background-color: rgba(10, 13, 20, 0.5)  !important; }
+  [data-theme="light"] .bg-white      { background-color: var(--color-foreground) !important; }
+  [data-theme="light"] .bg-white\/\[0\.04\] { background-color: rgba(10, 13, 20, 0.05) !important; }
+  [data-theme="light"] .bg-white\/\[0\.06\] { background-color: rgba(10, 13, 20, 0.07) !important; }
+  [data-theme="light"] .bg-white\/\[0\.12\] { background-color: rgba(10, 13, 20, 0.12) !important; }
+
+  /* Text — `text-white` (without slash) and the common opacity stops.
+     Without these the various divider slashes / hint placeholders /
+     active-tab labels would render as pure white on the bright canvas
+     and vanish completely. */
+  [data-theme="light"] .text-white      { color: var(--color-foreground) !important; }
+  [data-theme="light"] .text-white\/15  { color: rgba(10, 13, 20, 0.22) !important; }
+  [data-theme="light"] .text-white\/25  { color: rgba(10, 13, 20, 0.34) !important; }
+  [data-theme="light"] .text-white\/30  { color: rgba(10, 13, 20, 0.42) !important; }
+  [data-theme="light"] .text-white\/40  { color: rgba(10, 13, 20, 0.5)  !important; }
+  [data-theme="light"] .text-white\/60  { color: rgba(10, 13, 20, 0.65) !important; }
+
+  /* Placeholder colour — Tailwind compiles `placeholder:text-white/25`
+     to a `::placeholder { color: rgb(255 255 255 / 0.25) }` rule, which
+     stays white on light. Override at the placeholder selector. */
+  [data-theme="light"] .placeholder\:text-white\/25::placeholder {
+    color: rgba(10, 13, 20, 0.42) !important;
+  }
+
+  /* Hover-state white text on buttons / nav links. Tailwind compiles
+     `hover:text-white` to a `&:hover { color: #fff }` rule. Flip it. */
+  [data-theme="light"] .hover\:text-white:hover { color: var(--color-foreground) !important; }
+  [data-theme="light"] .group:hover .group-hover\:text-white { color: var(--color-foreground) !important; }
+
+  [data-theme="light"] .divide-white\/5  > :not([hidden]) ~ :not([hidden]) { border-color: rgba(10, 13, 20, 0.08) !important; }
+  [data-theme="light"] .divide-white\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(10, 13, 20, 0.12) !important; }
+
+  /* Terminal scrollbar thumb on light mode */
+  [data-theme="light"] .terminal-scroll::-webkit-scrollbar-thumb {
+    background: rgba(10, 13, 20, 0.18);
+  }
+  [data-theme="light"] .terminal-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(10, 13, 20, 0.32);
+  }
 }
 
 /* Custom scrollbar for terminal output */
@@ -168,4 +312,36 @@
 }
 .terminal-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.22);
+}
+
+/* Invisible scrollbar — scroll is still active, the scrollbar just isn't
+   painted. Used on section wrappers so content scrolls without chrome. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Old IE / legacy Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Soft top/bottom fade for vertical scroll containers — partially-visible
+   cards at the edges dim into the canvas instead of being clipped with a
+   hard line. Applied alongside `no-scrollbar overflow-y-auto`. */
+.fade-y {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 1.25rem,
+    #000 calc(100% - 2.5rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 1.25rem,
+    #000 calc(100% - 2.5rem),
+    transparent 100%
+  );
 }
