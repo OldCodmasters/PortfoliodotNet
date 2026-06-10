@@ -42,15 +42,15 @@ function subscribe(callback: () => void): () => void {
 
 function getClientSnapshot(): Theme {
   const attr = document.documentElement.getAttribute(ATTR);
-  return attr === "light" ? "light" : "dark";
+  return attr === "dark" ? "dark" : "light";
 }
 
 function getServerSnapshot(): Theme {
-  // SSR has no DOM — render with the dark default. The pre-paint script
+  // SSR has no DOM — render with the light default. The pre-paint script
   // in layout.tsx flips the attribute synchronously on the client before
   // any styles paint, and useSyncExternalStore reconciles immediately
   // after hydration.
-  return "dark";
+  return "light";
 }
 
 function applyTheme(next: Theme): void {
@@ -104,12 +104,12 @@ export const THEME_INIT_SCRIPT = `
 (function () {
   try {
     var ls = window.localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
-    var t = ls === "light" ? "light" : "dark";
+    var t = ls === "dark" ? "dark" : "light";
     document.documentElement.setAttribute("${ATTR}", t);
     document.documentElement.style.colorScheme = t;
   } catch (e) {
-    document.documentElement.setAttribute("${ATTR}", "dark");
-    document.documentElement.style.colorScheme = "dark";
+    document.documentElement.setAttribute("${ATTR}", "light");
+    document.documentElement.style.colorScheme = "light";
   }
 })();
 `;

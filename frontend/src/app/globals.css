@@ -351,6 +351,60 @@
     animation-delay: inherit;
   }
 
+  /* ── Work-life cinema ─────────────────────────────────────────────
+     The "My Work Life" section plays like a film: a dark projection
+     screen (even on the light theme — it's a screen), a conveyor belt
+     that never stops, and a per-slide progress bar that drives the
+     auto-advance. */
+  .cinema-screen {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(38, 52, 90, 0.55), transparent 60%),
+      linear-gradient(180deg, #0b1020 0%, #060a16 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 30px 60px -30px rgba(3, 6, 20, 0.8);
+  }
+  [data-theme="light"] .cinema-screen {
+    border-color: rgba(10, 13, 20, 0.25);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+      0 24px 48px -24px rgba(14, 16, 21, 0.45);
+  }
+  /* Letterbox bars — the screen is always widescreen. */
+  .cinema-screen::before,
+  .cinema-screen::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .cinema-screen::before { top: 0; }
+  .cinema-screen::after { bottom: 0; }
+
+  /* Conveyor belt — dashes stream forever. */
+  .belt-dash {
+    stroke-dasharray: 14 10;
+    animation: belt-move 1.1s linear infinite;
+  }
+
+  /* Machine signal-tower beacon. */
+  .beacon {
+    animation: beacon-blink 1.6s ease-in-out infinite;
+  }
+
+  /* Slide auto-advance — the bar fills, onAnimationEnd flips the slide. */
+  .slide-progress {
+    animation: progress-fill linear forwards;
+  }
+
   /* Chip pins — repeating tick marks along a module card's top edge so
      skill cards read as IC packages. */
   .chip-pins {
@@ -571,6 +625,20 @@
   100% { opacity: 0; transform: scale(1.9); }
 }
 
+@keyframes belt-move {
+  to { stroke-dashoffset: -24; }
+}
+
+@keyframes beacon-blink {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+
+@keyframes progress-fill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
 /* ── Reduced motion — kill every decorative animation in one move ────── */
 @media (prefers-reduced-motion: reduce) {
   .accent-gradient-text,
@@ -579,7 +647,10 @@
   .shine-sweep::before,
   .scan-line,
   .rail-grow,
-  .node-pulse::before {
+  .node-pulse::before,
+  .belt-dash,
+  .beacon,
+  .slide-progress {
     animation: none !important;
   }
   .scan-line {

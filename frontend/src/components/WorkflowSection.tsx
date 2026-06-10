@@ -8,7 +8,6 @@ import {
   type ReactElement,
 } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { FlyIn } from "./FlyIn";
 import type {
   Machine,
   MachineShape,
@@ -19,7 +18,7 @@ import type {
 } from "../data/workflow/types";
 import { SOFTWARE_STAGES } from "../data/workflow/software-stages";
 import { HARDWARE_STAGES } from "../data/workflow/hardware-stages";
-import { DatasheetFrame } from "./DatasheetFrame";
+import { WorkLifeCinema } from "./worklife/WorkLifeCinema";
 
 /* --------------------------- process-track data --------------------------- */
 
@@ -735,22 +734,20 @@ export function WorkflowSection() {
   return (
     <div className="relative h-full w-full">
       {/* Overview layer: always mounted (kept under the focused overlay)
-          so its FlyIn timeline doesn't restart on every back/forth. The
-          DatasheetFrame supplies the scroll container, fade-y mask, and
-          datasheet chrome shared with every other section. */}
+          so the cinema's belt, spotlight, and slide clock keep their
+          state on every back/forth. No datasheet chrome here — this
+          section plays as a full-bleed presentation. */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
           focusStage ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
-        <DatasheetFrame title="Work Life" sheet={3}>
-          <OverviewLayout
-            track={activeTrack}
-            tracks={TRACKS}
-            onTrackChange={handleTrackChange}
-            onFocus={setFocusKey}
-          />
-        </DatasheetFrame>
+        <WorkLifeCinema
+          tracks={TRACKS}
+          track={activeTrack}
+          onTrackChange={handleTrackChange}
+          onExplore={setFocusKey}
+        />
       </div>
 
       {/* Focused overlay — fills the same section slot, no datasheet
@@ -770,106 +767,6 @@ export function WorkflowSection() {
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-/* ------------------------------- overview -------------------------------- */
-
-function OverviewLayout({
-  track,
-  tracks,
-  onTrackChange,
-  onFocus,
-}: {
-  track: Track;
-  tracks: Track[];
-  onTrackChange: (id: TrackId) => void;
-  onFocus: (key: string) => void;
-}) {
-  const stages = track.stages;
-  return (
-    <>
-      {/* Track tabs — datasheet "options" row directly under the section
-          title block. The h2 has been hoisted into DatasheetFrame so the
-          card here can lead with the interactive track switcher. */}
-      <FlyIn index={3}>
-        <div
-          role="tablist"
-          aria-label="Work-life tracks"
-          className="mb-4 flex flex-wrap gap-1.5 sm:mb-5 sm:gap-2"
-        >
-          {tracks.map((t) => {
-            const isActive = t.id === track.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => onTrackChange(t.id)}
-                className={`glass specular group flex flex-col items-start gap-0.5 px-3 py-1.5 text-left transition-all duration-300 sm:px-4 sm:py-2 ${
-                  isActive
-                    ? "bg-white/[0.06] text-white"
-                    : "text-(--color-foreground-muted) hover:-translate-y-0.5 hover:bg-white/[0.04] hover:text-white"
-                }`}
-              >
-                <span className="font-mono text-[9px] uppercase tracking-wider text-(--color-foreground-subtle) group-hover:text-(--color-accent-3) sm:text-[10px]">
-                  {isActive ? "active track" : "switch"}
-                </span>
-                <span className="text-xs font-semibold sm:text-sm">{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </FlyIn>
-
-      <FlyIn index={2}>
-        <p className="mb-1.5 text-[10px] font-mono uppercase tracking-wider text-(--color-foreground-subtle) sm:mb-2 sm:text-xs">
-          {track.subtitle}
-        </p>
-      </FlyIn>
-      <FlyIn index={3}>
-        <p className="mb-5 max-w-2xl text-xs leading-relaxed text-(--color-foreground-muted) sm:mb-8 sm:text-sm md:text-base">
-          {track.intro}
-        </p>
-      </FlyIn>
-
-      <div className="flex flex-col items-stretch gap-2 sm:gap-3 md:flex-row md:items-stretch">
-        {stages.map((stage, i) => (
-          <Fragment key={stage.key}>
-            <FlyIn index={i + 4} className="flex-1">
-              <button
-                type="button"
-                onClick={() => onFocus(stage.key)}
-                className="glass specular group relative flex h-full w-full cursor-pointer flex-col items-center gap-2 p-3 pb-3 text-center transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.04] sm:gap-3 sm:p-5 sm:pb-4"
-              >
-                <span className="absolute left-2.5 top-2 font-mono text-[9px] tracking-wider text-(--color-foreground-subtle) sm:left-3 sm:text-[10px]">
-                  0{i + 1}
-                </span>
-                <span className="absolute right-2.5 top-2 text-(--color-foreground-subtle) transition-colors group-hover:text-(--color-accent-3) sm:right-3">
-                  <ExploreIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                </span>
-                <div className="text-(--color-accent-3)">
-                  <stage.Icon className="h-8 w-8 sm:h-11 sm:w-11" />
-                </div>
-                <h3 className="text-sm font-semibold sm:text-base">{stage.label}</h3>
-                <p className="text-[11px] leading-relaxed text-(--color-foreground-muted) sm:text-xs">
-                  {stage.desc}
-                </p>
-                <span className="mt-auto pt-1 font-mono text-[9px] uppercase tracking-wider text-(--color-foreground-subtle) transition-colors group-hover:text-(--color-accent-3) sm:pt-2 sm:text-[10px]">
-                  zoom in ›
-                </span>
-              </button>
-            </FlyIn>
-            {i < stages.length - 1 && (
-              <FlyIn index={i + 20} className="flex shrink-0 items-center justify-center">
-                <ArrowIcon className="h-5 w-5 rotate-90 text-(--color-foreground-subtle) sm:h-6 sm:w-6 md:rotate-0" />
-              </FlyIn>
-            )}
-          </Fragment>
-        ))}
-      </div>
-    </>
   );
 }
 
@@ -1652,23 +1549,6 @@ function ArrowIcon(props: SVGProps<SVGSVGElement>) {
     >
       <path d="M4 12 H18" />
       <path d="M13 6 L19 12 L13 18" />
-    </svg>
-  );
-}
-
-function ExploreIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M7 17 L17 7" />
-      <path d="M9 7 H17 V15" />
     </svg>
   );
 }
