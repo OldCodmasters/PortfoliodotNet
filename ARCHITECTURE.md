@@ -79,7 +79,10 @@ PortfolioWebDotNet/
 │           ├── SpotlightCard.tsx    # client — pointer-tracked card highlight
 │           ├── DotNav.tsx           # client — connected dot rail with label flyouts
 │           ├── FlyIn.tsx            # client — staggered enter/exit motion
-│           └── Terminal.tsx         # client — interactive CLI
+│           ├── Terminal.tsx         # client — interactive CLI
+│           └── worklife/
+│               ├── WorkLifeCinema.tsx      # client — "My Work Life" as an auto-playing presentation
+│               └── MachineSilhouettes.tsx  # 15 side-view station drawings (SMT line, software factory, maintenance bay)
 └── docs/                            # reserved for future diagrams
 ```
 
@@ -240,6 +243,10 @@ disabled or frozen under `prefers-reduced-motion`):
 - `EngineeringScene` — fixed canvas behind everything: parallax blueprint grids, procedural PCB traces with traveling signal pulses, slow line-art gears. Accent hue cross-fades per section; colors flip for the light theme; rAF pauses on hidden tabs; dpr capped at 2.
 - CSS keyframes in `globals.css` — aurora blobs, film grain, award shine sweep, hero scan line, timeline rail growth, node pulse rings.
 - `DecoderText` — the hero name decodes from scrambled glyphs on mount.
+- `WorkLifeCinema` — the Work Life section plays as a letterboxed projection: machine silhouettes on a conveyor, a gliding stage spotlight, a payload riding the belt, and PowerPoint-style auto-advancing slides with a pause control.
+
+The default theme is **light** (paper datasheet); a stored `portfolio.theme`
+preference always wins, and the dark theme remains fully supported.
 
 ---
 
