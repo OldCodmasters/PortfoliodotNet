@@ -68,13 +68,17 @@ PortfolioWebDotNet/
 │       │   ├── api.ts               # fetch helpers
 │       │   └── types.ts             # TS types mirroring backend DTOs
 │       └── components/
-│           ├── Header.tsx
+│           ├── Header.tsx           # client — nav pill, animated underline, sheet readout
 │           ├── Hero.tsx
 │           ├── ExperienceSection.tsx
 │           ├── SkillsSection.tsx
 │           ├── AwardsSection.tsx
-│           ├── DotNav.tsx           # client — scroll-spy dot navigation
-│           ├── Reveal.tsx           # client — motion reveal on scroll
+│           ├── EngineeringScene.tsx # client — canvas "Wonderland" backdrop (grid/traces/gears)
+│           ├── DecoderText.tsx      # client — machine-readout text reveal
+│           ├── PortraitViewport.tsx # client — hero portrait: scan sweep, tilt, drawn reticle
+│           ├── SpotlightCard.tsx    # client — pointer-tracked card highlight
+│           ├── DotNav.tsx           # client — connected dot rail with label flyouts
+│           ├── FlyIn.tsx            # client — staggered enter/exit motion
 │           └── Terminal.tsx         # client — interactive CLI
 └── docs/                            # reserved for future diagrams
 ```
@@ -224,11 +228,18 @@ Defined as Tailwind v4 `@theme` tokens and reusable `@layer components` classes 
 | `.accent-gradient-text` | Tri-stop gradient text (accent → accent-2 → accent-3). |
 | `--ease-spring` | CSS `linear()` easing that mimics a spring curve (used where we don't need JS). |
 
-### Motion
+### Motion & cinematic layer ("Wonderland of Engineering")
 `motion/react` (the renamed Framer Motion package) powers:
-- `Reveal` — scroll-triggered fade + rise + blur-out with a soft spring.
-- `DotNav` — shared-element active-ring using `layoutId`.
+- `PageShell` — direction-aware camera moves between sections (zoom + blur, reversed when navigating back) with staggered `FlyIn` children.
+- `DotNav` / `Header` — shared-element active-ring and nav underline using `layoutId`.
+- `PortraitViewport` — spring pointer tilt + pathLength draw-in of the reticle and corner brackets.
 - `Terminal` — collapse/expand height spring + the root card's `layout` prop for smooth resize.
+
+Self-animating layers (no interaction required, all `aria-hidden`, all
+disabled or frozen under `prefers-reduced-motion`):
+- `EngineeringScene` — fixed canvas behind everything: parallax blueprint grids, procedural PCB traces with traveling signal pulses, slow line-art gears. Accent hue cross-fades per section; colors flip for the light theme; rAF pauses on hidden tabs; dpr capped at 2.
+- CSS keyframes in `globals.css` — aurora blobs, film grain, award shine sweep, hero scan line, timeline rail growth, node pulse rings.
+- `DecoderText` — the hero name decodes from scrambled glyphs on mount.
 
 ---
 
