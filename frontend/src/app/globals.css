@@ -192,6 +192,181 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    animation: gradient-pan 9s ease-in-out infinite alternate;
+  }
+
+  /* ── Wonderland of Engineering — cinematic layers ─────────────────── */
+
+  /* Aurora blobs — two huge blurred accent fields slowly orbiting behind
+     everything. They sit above the body gradient but below all content,
+     giving the canvas a living, breathing quality. */
+  .aurora-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.5;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .aurora-a {
+    width: 55vw;
+    height: 55vw;
+    left: -12vw;
+    top: -18vw;
+    background: radial-gradient(circle at 35% 35%, rgba(122, 162, 255, 0.16), transparent 65%);
+    animation: aurora-drift-a 36s ease-in-out infinite alternate;
+  }
+  .aurora-b {
+    width: 48vw;
+    height: 48vw;
+    right: -14vw;
+    bottom: -16vw;
+    background: radial-gradient(circle at 60% 60%, rgba(199, 155, 255, 0.14), transparent 65%);
+    animation: aurora-drift-b 44s ease-in-out infinite alternate;
+  }
+  [data-theme="light"] .aurora-a {
+    background: radial-gradient(circle at 35% 35%, rgba(59, 98, 204, 0.1), transparent 65%);
+  }
+  [data-theme="light"] .aurora-b {
+    background: radial-gradient(circle at 60% 60%, rgba(124, 58, 237, 0.08), transparent 65%);
+  }
+
+  /* Film grain — a fixed SVG-noise wash that keeps large gradient fields
+     from banding and gives the whole frame a subtle cinematic texture. */
+  .grain {
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain-shift 1.4s steps(4) infinite;
+  }
+  [data-theme="light"] .grain {
+    opacity: 0.05;
+  }
+
+  /* Spotlight cards — a pointer-tracked radial highlight plus a border
+     glow. The JS wrapper (SpotlightCard) feeds --spot-x / --spot-y /
+     --spot-o; without JS the card simply has no highlight. */
+  .spotlight-card {
+    position: relative;
+  }
+  .spotlight-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      280px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+      rgba(122, 162, 255, 0.14),
+      transparent 70%
+    );
+    opacity: var(--spot-o, 0);
+    transition: opacity 350ms ease;
+    pointer-events: none;
+  }
+  [data-theme="light"] .spotlight-card::after {
+    background: radial-gradient(
+      280px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+      rgba(47, 79, 181, 0.1),
+      transparent 70%
+    );
+  }
+
+  /* Shine sweep — a specular band that slides across award seals on an
+     automatic loop. Pair with an animation-delay per card. */
+  .shine-sweep {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .shine-sweep::before {
+    content: "";
+    position: absolute;
+    top: -30%;
+    bottom: -30%;
+    left: -80%;
+    width: 45%;
+    transform: rotate(18deg);
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 45%,
+      rgba(255, 255, 255, 0.22) 50%,
+      rgba(255, 255, 255, 0.1) 55%,
+      transparent 100%
+    );
+    animation: shine-slide 7s ease-in-out infinite;
+    animation-delay: inherit;
+  }
+  [data-theme="light"] .shine-sweep::before {
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.35) 45%,
+      rgba(255, 255, 255, 0.7) 50%,
+      rgba(255, 255, 255, 0.35) 55%,
+      transparent 100%
+    );
+  }
+
+  /* Portrait scan line — an automated sweep over the hero portrait, the
+     "machine is reading the reference image" effect. */
+  .scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 18%;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(91, 228, 211, 0.1) 40%,
+      rgba(91, 228, 211, 0.32) 50%,
+      rgba(91, 228, 211, 0.1) 60%,
+      transparent 100%
+    );
+    animation: scan-sweep 5.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    pointer-events: none;
+  }
+
+  /* Timeline rail — grows in from the top once per mount. */
+  .rail-grow {
+    transform-origin: top;
+    animation: rail-grow 1.2s cubic-bezier(0.3, 0.9, 0.3, 1) both;
+  }
+
+  /* Node pulse — soft expanding ring on timeline milestones. */
+  .node-pulse::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    opacity: 0;
+    animation: node-ring 3.2s ease-out infinite;
+    animation-delay: inherit;
+  }
+
+  /* Chip pins — repeating tick marks along a module card's top edge so
+     skill cards read as IC packages. */
+  .chip-pins {
+    position: absolute;
+    top: 0;
+    left: 18%;
+    right: 18%;
+    height: 7px;
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--color-border-glass-strong) 0 3px,
+      transparent 3px 11px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    pointer-events: none;
   }
 
   /* ── Light-mode surface inversions ────────────────────────────────
@@ -344,4 +519,70 @@
     #000 calc(100% - 2.5rem),
     transparent 100%
   );
+}
+
+/* ── Cinematic keyframes ─────────────────────────────────────────────── */
+
+@keyframes gradient-pan {
+  from { background-position: 0% center; }
+  to   { background-position: 100% center; }
+}
+
+@keyframes aurora-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(8vw, 6vh, 0) scale(1.12); }
+  to   { transform: translate3d(3vw, 12vh, 0) scale(0.96); }
+}
+
+@keyframes aurora-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(-7vw, -8vh, 0) scale(1.08); }
+  to   { transform: translate3d(-12vw, -2vh, 0) scale(1.16); }
+}
+
+@keyframes grain-shift {
+  0%   { transform: translate3d(0, 0, 0); }
+  25%  { transform: translate3d(-2%, 1.5%, 0); }
+  50%  { transform: translate3d(1.5%, -2%, 0); }
+  75%  { transform: translate3d(-1%, -1%, 0); }
+  100% { transform: translate3d(2%, 2%, 0); }
+}
+
+@keyframes shine-slide {
+  0%, 55% { left: -80%; }
+  85%, 100% { left: 160%; }
+}
+
+@keyframes scan-sweep {
+  0%   { top: -20%; opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { top: 102%; opacity: 0; }
+}
+
+@keyframes rail-grow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes node-ring {
+  0%   { opacity: 0.7; transform: scale(0.6); }
+  70%  { opacity: 0; transform: scale(1.9); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+/* ── Reduced motion — kill every decorative animation in one move ────── */
+@media (prefers-reduced-motion: reduce) {
+  .accent-gradient-text,
+  .aurora-blob,
+  .grain,
+  .shine-sweep::before,
+  .scan-line,
+  .rail-grow,
+  .node-pulse::before {
+    animation: none !important;
+  }
+  .scan-line {
+    display: none;
+  }
 }

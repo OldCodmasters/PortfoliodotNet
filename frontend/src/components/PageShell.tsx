@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -20,6 +19,7 @@ import { ExperienceSection } from "./ExperienceSection";
 import { WorkflowSection } from "./WorkflowSection";
 import { SkillsSection } from "./SkillsSection";
 import { AwardsSection } from "./AwardsSection";
+import { EngineeringScene } from "./EngineeringScene";
 
 type PageCtx = {
   current: SectionKey;
@@ -36,38 +36,78 @@ export function usePage() {
   return ctx;
 }
 
+/**
+ * Cinematic "camera move" between sections. Navigating forward, the old
+ * section scales up past the lens while the new one rises from depth;
+ * navigating backward the move reverses. Children (FlyIn) inherit the
+ * stagger from these container variants exactly as before.
+ */
 const sectionContainer: Variants = {
-  initial: {},
+  initial: (dir: number) => ({
+    opacity: 0,
+    scale: dir >= 0 ? 0.92 : 1.07,
+    y: dir >= 0 ? 28 : -28,
+    filter: "blur(14px)",
+  }),
   animate: {
-    transition: { staggerChildren: 0.045, delayChildren: 0.05 },
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 0.9, 0.3, 1],
+      staggerChildren: 0.045,
+      delayChildren: 0.05,
+    },
   },
-  exit: {
-    transition: { staggerChildren: 0.025, staggerDirection: -1 },
-  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    scale: dir >= 0 ? 1.07 : 0.92,
+    y: dir >= 0 ? -28 : 28,
+    filter: "blur(14px)",
+    transition: {
+      duration: 0.45,
+      ease: [0.55, 0.05, 0.7, 0.4],
+      staggerChildren: 0.025,
+      staggerDirection: -1,
+    },
+  }),
 };
 
 const WHEEL_COOLDOWN_MS = 850;
 
+type Nav = { key: SectionKey; dir: 1 | -1 };
+
 export function PageShell({ portfolio }: { portfolio: Portfolio }) {
-  const [current, setCurrent] = useState<SectionKey>("home");
+  // dir: +1 = traveling deeper into the document, -1 = back toward home.
+  // Kept beside the key so the camera move always knows its direction.
+  const [nav, setNav] = useState<Nav>({ key: "home", dir: 1 });
+  const current = nav.key;
   const lastNavRef = useRef<number>(0);
 
   const goTo = useCallback((key: SectionKey) => {
     const now = performance.now();
     if (now - lastNavRef.current < 200) return;
     lastNavRef.current = now;
-    setCurrent((c) => (c === key ? c : key));
+    setNav((n) => {
+      if (n.key === key) return n;
+      return {
+        key,
+        dir: SECTION_ORDER.indexOf(key) > SECTION_ORDER.indexOf(n.key) ? 1 : -1,
+      };
+    });
   }, []);
 
   const step = useCallback((delta: 1 | -1) => {
     const now = performance.now();
     if (now - lastNavRef.current < WHEEL_COOLDOWN_MS) return;
-    setCurrent((c) => {
-      const i = SECTION_ORDER.indexOf(c);
+    setNav((n) => {
+      const i = SECTION_ORDER.indexOf(n.key);
       const ni = Math.max(0, Math.min(SECTION_ORDER.length - 1, i + delta));
-      if (ni === i) return c;
+      if (ni === i) return n;
       lastNavRef.current = now;
-      return SECTION_ORDER[ni];
+      return { key: SECTION_ORDER[ni], dir: delta };
     });
   }, []);
 
@@ -124,12 +164,17 @@ export function PageShell({ portfolio }: { portfolio: Portfolio }) {
 
   return (
     <PageContext.Provider value={ctxValue}>
+      <EngineeringScene section={current} />
       <Header />
       <DotNav />
-      <div className="fixed inset-0 overflow-hidden">
-        <AnimatePresence mode="sync" initial={false}>
+      <div
+        className="fixed inset-0 overflow-hidden"
+        style={{ perspective: "1400px" }}
+      >
+        <AnimatePresence mode="sync" initial={false} custom={nav.dir}>
           <motion.section
             key={current}
+            custom={nav.dir}
             variants={sectionContainer}
             initial="initial"
             animate="animate"

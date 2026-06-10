@@ -1,29 +1,30 @@
-import Image from "next/image";
 import type { HeroProfile } from "@/lib/types";
 import { apiBase } from "@/lib/api";
 import { FlyIn } from "./FlyIn";
+import { DecoderText } from "./DecoderText";
+import { PortraitViewport } from "./PortraitViewport";
 
 /**
- * Hero — engineering datasheet aesthetic.
+ * Hero — engineering datasheet aesthetic, now with cinematic instruments.
  *
- * The page reads like a technical spec sheet for the person, rather than a
- * generic photo + bio split:
- *   • A "datasheet" header strip with part-number / revision metadata and a
- *     pulsing availability LED.
- *   • A structured spec column on the left with monospaced labels (PART,
- *     FUNC, DESC, S01..Sn) cueing each block of content, like rows of a
- *     component datasheet.
- *   • A portrait "viewport" on the right framed by registration corner
- *     brackets, a center crosshair reticle, and a faint registration-grid
- *     bleed — duotone-tinted (blue→purple) so the photo reads as a
- *     technical reference image rather than a candid snapshot.
- *   • A footer dimension strip on the bottom with size markers, echoing
- *     the bottom edge of an engineering drawing.
+ * The page reads like a technical spec sheet for the person:
+ *   • a "datasheet" header strip with part-number / revision metadata and a
+ *     pulsing availability LED,
+ *   • the name decodes itself like a machine readout (DecoderText),
+ *   • a structured spec column with monospaced labels (PART, FUNC, DESC,
+ *     S01..Sn) cueing each block of content,
+ *   • a portrait "viewport" with auto scan-sweep, drawn-in reticle and
+ *     pointer tilt (PortraitViewport),
+ *   • a CTA row wired to the CV download and LinkedIn,
+ *   • a footer dimension strip echoing an engineering drawing's edge.
  */
 export function Hero({ hero }: { hero: HeroProfile }) {
   const imageSrc = hero.imageUrl.startsWith("http")
     ? hero.imageUrl
     : `${apiBase}${hero.imageUrl}`;
+  const cvHref = hero.cvUrl.startsWith("http")
+    ? hero.cvUrl
+    : `${apiBase}${hero.cvUrl}`;
 
   // Build a part-number-style identifier from the person's initials so the
   // caption under the portrait carries a deterministic "№ XX-001" tag.
@@ -64,12 +65,16 @@ export function Hero({ hero }: { hero: HeroProfile }) {
         <div className="grid gap-6 sm:gap-8 md:grid-cols-[1fr_auto] md:gap-10 lg:gap-14">
           {/* Left: structured spec sheet */}
           <div>
-            {/* PART · title block */}
+            {/* PART · title block — name decodes in like a part number */}
             <FlyIn index={1}>
               <SpecRow label="Part" sub="001">
                 <h1 className="text-3xl font-semibold leading-[1.05] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
                   Hi, I&apos;m{" "}
-                  <span className="accent-gradient-text">{hero.name}</span>
+                  <DecoderText
+                    text={hero.name}
+                    delay={350}
+                    className="accent-gradient-text"
+                  />
                 </h1>
               </SpecRow>
             </FlyIn>
@@ -118,135 +123,36 @@ export function Hero({ hero }: { hero: HeroProfile }) {
                 ))}
               </ul>
             </div>
+
+            {/* INTERFACE · CTA row — the datasheet's "ordering information" */}
+            <div className="mt-5 sm:mt-7">
+              <SectionLabel>Interface</SectionLabel>
+              <FlyIn index={12}>
+                <div className="mt-3 flex flex-wrap items-center gap-2.5 sm:gap-3">
+                  <a href={cvHref} download className="pill-btn text-sm">
+                    <DownloadIcon />
+                    Download CV
+                  </a>
+                  <a
+                    href={hero.linkedInUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pill-btn text-sm"
+                  >
+                    <LinkedInIcon />
+                    LinkedIn
+                  </a>
+                  <span className="hidden font-mono text-[9px] uppercase tracking-[0.22em] text-(--color-foreground-subtle) sm:inline">
+                    I/O ports · 2 active
+                  </span>
+                </div>
+              </FlyIn>
+            </div>
           </div>
 
           {/* Right: portrait viewport */}
           <FlyIn index={5}>
-            <figure className="flex flex-col items-center self-center md:self-center">
-              <div className="relative">
-                {/* Bleed registration grid behind the frame */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute -inset-3 opacity-25 sm:-inset-4"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(to right, rgba(245,247,251,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(245,247,251,0.08) 1px, transparent 1px)",
-                    backgroundSize: "0.625rem 0.625rem",
-                    maskImage:
-                      "radial-gradient(ellipse 75% 75% at 50% 50%, #000 30%, transparent 100%)",
-                    WebkitMaskImage:
-                      "radial-gradient(ellipse 75% 75% at 50% 50%, #000 30%, transparent 100%)",
-                  }}
-                />
-
-                {/* Frame box */}
-                <div className="relative aspect-[4/5] w-[12rem] sm:w-[14rem] lg:w-[16rem] xl:w-[18rem]">
-                  {/* Image — grayscale base, then a screen-blend duotone wash
-                      tints highlights blue/purple, then a vignette pushes the
-                      edges into the canvas. */}
-                  <div className="relative h-full w-full overflow-hidden">
-                    <Image
-                      src={imageSrc}
-                      alt={hero.name}
-                      fill
-                      sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 16rem, 14rem"
-                      className="object-cover"
-                      style={{
-                        filter:
-                          "grayscale(1) contrast(1.08) brightness(1.05)",
-                      }}
-                      priority
-                      unoptimized
-                    />
-                    {/* Duotone accent wash */}
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(122,162,255,0.45) 0%, rgba(199,155,255,0.32) 50%, rgba(91,228,211,0.18) 100%)",
-                        mixBlendMode: "screen",
-                      }}
-                    />
-                    {/* Vignette — fade picture edges toward canvas */}
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0"
-                      style={{
-                        background:
-                          "radial-gradient(85% 95% at 50% 45%, transparent 50%, rgba(0,0,0,0.55) 100%)",
-                      }}
-                    />
-                    {/* Faint scan-lines for technical reference vibe */}
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px)",
-                      }}
-                    />
-                  </div>
-
-                  {/* Center reticle */}
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-40"
-                  >
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 32 32"
-                      fill="none"
-                      className="text-(--color-accent-3)"
-                    >
-                      <circle
-                        cx="16"
-                        cy="16"
-                        r="7"
-                        stroke="currentColor"
-                        strokeWidth="0.75"
-                      />
-                      <circle cx="16" cy="16" r="1" fill="currentColor" />
-                      <line x1="16" y1="0" x2="16" y2="9" stroke="currentColor" strokeWidth="0.75" />
-                      <line x1="16" y1="23" x2="16" y2="32" stroke="currentColor" strokeWidth="0.75" />
-                      <line x1="0" y1="16" x2="9" y2="16" stroke="currentColor" strokeWidth="0.75" />
-                      <line x1="23" y1="16" x2="32" y2="16" stroke="currentColor" strokeWidth="0.75" />
-                    </svg>
-                  </div>
-
-                  {/* Corner registration brackets */}
-                  <CornerBracket position="tl" />
-                  <CornerBracket position="tr" />
-                  <CornerBracket position="bl" />
-                  <CornerBracket position="br" />
-
-                  {/* Side dimension marks (top + right) */}
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2 font-mono text-[8px] uppercase tracking-[0.25em] text-(--color-foreground-subtle) sm:text-[9px]"
-                  >
-                    ◄ 4 ►
-                  </span>
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute -right-5 top-1/2 -translate-y-1/2 font-mono text-[8px] uppercase tracking-[0.25em] text-(--color-foreground-subtle) sm:text-[9px]"
-                    style={{ writingMode: "vertical-rl" }}
-                  >
-                    ◄ 5 ►
-                  </span>
-                </div>
-
-                {/* Caption — read like a drawing's title block */}
-                <figcaption className="mt-3 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.18em] text-(--color-foreground-subtle) sm:mt-4 sm:text-[10px]">
-                  <span>Front view</span>
-                  <span className="text-(--color-foreground-muted)">
-                    № {initials}-001
-                  </span>
-                  <span>1:1</span>
-                </figcaption>
-              </div>
-            </figure>
+            <PortraitViewport src={imageSrc} name={hero.name} initials={initials} />
           </FlyIn>
         </div>
 
@@ -325,39 +231,21 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Camera-style corner registration mark drawn just outside the picture
- * frame. Each corner is a small L-shape rotated to the appropriate corner.
- */
-function CornerBracket({
-  position,
-}: {
-  position: "tl" | "tr" | "bl" | "br";
-}) {
-  const positionCls = {
-    tl: "-left-1.5 -top-1.5",
-    tr: "-right-1.5 -top-1.5 rotate-90",
-    bl: "-left-1.5 -bottom-1.5 -rotate-90",
-    br: "-right-1.5 -bottom-1.5 rotate-180",
-  }[position];
+function DownloadIcon() {
   return (
-    <span
-      aria-hidden
-      className={`pointer-events-none absolute h-3.5 w-3.5 text-(--color-accent-3) sm:h-4 sm:w-4 ${positionCls}`}
-    >
-      <svg
-        viewBox="0 0 16 16"
-        fill="none"
-        className="h-full w-full"
-        preserveAspectRatio="none"
-      >
-        <path
-          d="M0 8 L0 0 L8 0"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="square"
-        />
-      </svg>
-    </span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function LinkedInIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
   );
 }
