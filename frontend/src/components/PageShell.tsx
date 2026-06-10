@@ -122,18 +122,15 @@ export function PageShell({ portfolio }: { portfolio: Portfolio }) {
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
         return;
       }
-      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
+      // Space / Home / End are intentionally NOT bound: Space belongs to
+      // in-section players (the work-life cinema pauses on it) and
+      // Home/End caused surprise jumps to the first/last sheet.
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
         next();
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
         prev();
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        goTo("home");
-      } else if (e.key === "End") {
-        e.preventDefault();
-        goTo("awards");
       }
     };
     window.addEventListener("keydown", onKey);

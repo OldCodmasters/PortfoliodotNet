@@ -389,6 +389,14 @@
   .cinema-screen::before { top: 0; }
   .cinema-screen::after { bottom: 0; }
 
+  /* The browser must never paint a default focus rectangle inside the
+     screen — keyboard users get the focus-visible rings on the projector
+     controls instead. */
+  .cinema-screen :focus:not(:focus-visible),
+  .cinema-screen svg * {
+    outline: none;
+  }
+
   /* Conveyor belt — dashes stream forever. */
   .belt-dash {
     stroke-dasharray: 14 10;

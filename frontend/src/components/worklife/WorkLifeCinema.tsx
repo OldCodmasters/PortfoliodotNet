@@ -55,7 +55,9 @@ export function WorkLifeCinema({
     onTrackChange(id);
   };
 
-  // ←/→ scrub the show (unless a stage detail overlay is open).
+  // ←/→ scrub the show, Space pauses the projector (unless a stage detail
+  // overlay is open). Capture phase so the page-level navigation handler
+  // never sees the keys the cinema owns.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (document.body.dataset.modalOpen === "true") return;
@@ -63,14 +65,20 @@ export function WorkLifeCinema({
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       if (e.key === "ArrowRight") {
         e.preventDefault();
+        e.stopPropagation();
         select(idx + 1);
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
+        e.stopPropagation();
         select(idx - 1);
+      } else if (e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        setPaused((p) => !p);
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [idx, select]);
 
   return (
@@ -88,7 +96,7 @@ export function WorkLifeCinema({
                 key={t.id}
                 type="button"
                 onClick={() => changeTrack(t.id)}
-                className={`rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] transition-all duration-300 sm:px-4 sm:py-1.5 sm:text-[11px] ${
+                className={`rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] outline-none transition-all duration-300 focus-visible:ring-1 focus-visible:ring-(--color-foreground)/40 sm:px-4 sm:py-1.5 sm:text-[11px] ${
                   active
                     ? "border-(--color-border-glass-strong) bg-(--color-foreground)/10 text-(--color-foreground)"
                     : "border-(--color-border-glass) text-(--color-foreground-muted) hover:text-(--color-foreground)"
@@ -110,15 +118,19 @@ export function WorkLifeCinema({
 
       {/* ── The screen ───────────────────────────────────────────────── */}
       <div className="cinema-screen flex min-h-0 flex-1 flex-col text-white">
-        {/* Slide titles — cut in like a movie title card */}
-        <div className="relative z-[1] px-4 pt-6 sm:px-8 sm:pt-8 md:px-12">
-          <AnimatePresence mode="wait">
+        {/* Slide titles — crossfade in place like film title cards. The
+            container has a fixed height and the cards are absolutely
+            positioned, so outgoing and incoming text overlap smoothly
+            instead of popping. */}
+        <div className="relative z-[1] h-[7.5rem] sm:h-[9.5rem]">
+          <AnimatePresence mode="sync" initial={false}>
             <motion.div
               key={`${track.id}-${stage.key}`}
-              initial={{ opacity: 0, y: 26, filter: "blur(8px)" }}
+              initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -18, filter: "blur(8px)" }}
-              transition={{ duration: 0.45, ease: [0.22, 0.9, 0.3, 1] }}
+              exit={{ opacity: 0, y: -10, filter: "blur(6px)" }}
+              transition={{ duration: 0.7, ease: [0.25, 0.8, 0.25, 1] }}
+              className="absolute inset-0 px-4 pt-6 sm:px-8 sm:pt-8 md:px-12"
             >
               <p
                 className="font-mono text-[10px] uppercase tracking-[0.3em] sm:text-[11px]"
@@ -137,17 +149,9 @@ export function WorkLifeCinema({
                   {stage.desc}
                 </span>
               </div>
-              <p className="mt-2 line-clamp-2 max-w-3xl text-xs leading-relaxed text-white/65 sm:line-clamp-3 sm:text-sm">
+              <p className="mt-2 line-clamp-2 max-w-3xl text-xs leading-relaxed text-white/65 sm:text-sm">
                 {stage.overview}
               </p>
-              <button
-                type="button"
-                onClick={() => onExplore(stage.key)}
-                className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.06] px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-white/85 transition hover:bg-white/[0.14] sm:text-[11px]"
-              >
-                Walk into this station
-                <span aria-hidden>›</span>
-              </button>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -160,6 +164,7 @@ export function WorkLifeCinema({
             tint={tint}
             activeIndex={idx}
             onSelect={select}
+            onExplore={onExplore}
           />
         </div>
 
@@ -169,7 +174,7 @@ export function WorkLifeCinema({
             type="button"
             onClick={() => select(idx - 1)}
             aria-label="Previous station"
-            className="grid h-7 w-7 place-items-center rounded-full border border-white/15 text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="grid h-7 w-7 place-items-center rounded-full border border-white/15 text-white/70 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-1 focus-visible:ring-white/50"
           >
             ‹
           </button>
@@ -177,7 +182,7 @@ export function WorkLifeCinema({
             type="button"
             onClick={() => setPaused((p) => !p)}
             aria-label={paused ? "Resume the show" : "Pause the show"}
-            className="grid h-7 w-7 place-items-center rounded-full border border-white/15 text-[9px] text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="grid h-7 w-7 place-items-center rounded-full border border-white/15 text-[9px] text-white/70 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-1 focus-visible:ring-white/50"
           >
             {paused ? "▶" : "❚❚"}
           </button>
@@ -185,7 +190,7 @@ export function WorkLifeCinema({
             type="button"
             onClick={() => select(idx + 1)}
             aria-label="Next station"
-            className="grid h-7 w-7 place-items-center rounded-full border border-white/15 text-white/70 transition hover:bg-white/10 hover:text-white"
+            className="grid h-7 w-7 place-items-center rounded-full border border-white/15 text-white/70 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-1 focus-visible:ring-white/50"
           >
             ›
           </button>
@@ -199,7 +204,7 @@ export function WorkLifeCinema({
                 type="button"
                 onClick={() => select(i)}
                 aria-label={`Go to ${s.label}`}
-                className="h-1 flex-1 overflow-hidden rounded-full bg-white/15"
+                className="h-1 flex-1 overflow-hidden rounded-full bg-white/15 outline-none focus-visible:ring-1 focus-visible:ring-white/50"
               >
                 {i < idx && <span className="block h-full w-full" style={{ background: tint }} />}
                 {i === idx && (
@@ -211,7 +216,11 @@ export function WorkLifeCinema({
                       animationDuration: `${SLIDE_MS}ms`,
                       animationPlayState: paused ? "paused" : "running",
                     }}
-                    onAnimationEnd={() => select(idx + 1)}
+                    // The show parks on the last station instead of looping
+                    // back to the start by itself.
+                    onAnimationEnd={() => {
+                      if (idx < stages.length - 1) select(idx + 1);
+                    }}
                   />
                 )}
               </button>
@@ -219,7 +228,7 @@ export function WorkLifeCinema({
           </div>
 
           <span className="hidden font-mono text-[9px] uppercase tracking-[0.2em] text-white/40 sm:inline">
-            ← → to scrub
+            ← → scrub · space pause
           </span>
         </div>
       </div>
@@ -240,20 +249,23 @@ function LineScene({
   tint,
   activeIndex,
   onSelect,
+  onExplore,
 }: {
   stages: Stage[];
   trackId: TrackId;
   tint: string;
   activeIndex: number;
   onSelect: (i: number) => void;
+  onExplore: (key: string) => void;
 }) {
   const cx = (i: number) => i * STATION_W + STATION_W / 2;
   const activeCx = cx(activeIndex);
+  const activeStage = stages[activeIndex];
 
   return (
     <svg
       viewBox={`0 0 ${SCENE_W} ${SCENE_H}`}
-      className="block h-auto w-full"
+      className="block h-auto w-full select-none [&_*]:outline-none"
       role="group"
       aria-label={`${stages.length} stations on the line`}
     >
@@ -272,7 +284,7 @@ function LineScene({
       <motion.g
         initial={false}
         animate={{ x: activeCx }}
-        transition={{ type: "spring", stiffness: 70, damping: 16 }}
+        transition={{ type: "spring", stiffness: 52, damping: 17 }}
         aria-hidden
       >
         <polygon points={`-14,6 14,6 120,${BELT_Y} -120,${BELT_Y}`} fill="url(#spot-cone)" />
@@ -280,7 +292,8 @@ function LineScene({
         <ellipse cx={0} cy={BELT_Y + 6} rx={120} ry={14} fill="url(#floor-glow)" />
       </motion.g>
 
-      {/* Stations */}
+      {/* Stations — plain click targets, never focusable, so the browser
+          never paints a focus rectangle around a machine. */}
       {stages.map((s, i) => {
         const active = i === activeIndex;
         const Silhouette = STATION_SILHOUETTES[s.key];
@@ -290,9 +303,7 @@ function LineScene({
             transform={`translate(${cx(i) - 90}, ${BELT_Y - 150 - 2})`}
             onClick={() => onSelect(i)}
             className="cursor-pointer"
-            role="button"
-            aria-label={`${s.label} station`}
-            tabIndex={-1}
+            aria-hidden
           >
             {/* hit area */}
             <rect x="-10" y="-20" width="200" height="190" fill="transparent" />
@@ -300,7 +311,7 @@ function LineScene({
               style={{
                 color: active ? tint : "rgba(255,255,255,0.3)",
                 opacity: active ? 1 : 0.75,
-                transition: "color 500ms ease, opacity 500ms ease",
+                transition: "color 700ms ease, opacity 700ms ease",
               }}
             >
               {Silhouette ? <Silhouette /> : null}
@@ -311,7 +322,7 @@ function LineScene({
               y="178"
               textAnchor="middle"
               fill={active ? "#ffffff" : "rgba(255,255,255,0.4)"}
-              style={{ transition: "fill 500ms ease" }}
+              style={{ transition: "fill 700ms ease" }}
               fontSize="11"
               letterSpacing="2"
               fontFamily="var(--font-mono)"
@@ -321,6 +332,50 @@ function LineScene({
           </g>
         );
       })}
+
+      {/* Minimal "walk in" chip — fades in above the spotlit machine once
+          the lamp has settled; this is the door into the stage detail. */}
+      <AnimatePresence mode="wait">
+        <motion.g
+          key={`${trackId}-${activeStage.key}`}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.4, delay: 0.45, ease: "easeOut" }}
+          onClick={() => onExplore(activeStage.key)}
+          className="cursor-pointer"
+          role="button"
+          aria-label={`Walk into ${activeStage.label}`}
+        >
+          <g transform={`translate(${activeCx}, 40)`}>
+            <rect
+              x="-46"
+              y="-12"
+              width="92"
+              height="24"
+              rx="12"
+              fill="rgba(4, 8, 18, 0.78)"
+              stroke={tint}
+              strokeOpacity="0.55"
+            />
+            <text
+              x="-6"
+              y="4"
+              textAnchor="middle"
+              fill="#ffffff"
+              fillOpacity="0.92"
+              fontSize="10.5"
+              letterSpacing="2"
+              fontFamily="var(--font-mono)"
+            >
+              WALK IN
+            </text>
+            <text x="32" y="4.5" textAnchor="middle" fill={tint} fontSize="12">
+              ›
+            </text>
+          </g>
+        </motion.g>
+      </AnimatePresence>
 
       {/* Conveyor — rails, rollers, streaming belt dashes */}
       <g aria-hidden>
@@ -348,11 +403,12 @@ function LineScene({
         ))}
       </g>
 
-      {/* Payload riding the belt to the active station */}
+      {/* Payload riding the belt to the active station — slightly softer
+          spring than the spotlight so it trails the light like a follow car */}
       <motion.g
         initial={false}
         animate={{ x: activeCx }}
-        transition={{ type: "spring", stiffness: 60, damping: 15 }}
+        transition={{ type: "spring", stiffness: 42, damping: 15 }}
         aria-hidden
       >
         <Payload trackId={trackId} tint={tint} />
