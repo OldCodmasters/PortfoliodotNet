@@ -240,7 +240,7 @@ Defined as Tailwind v4 `@theme` tokens and reusable `@layer components` classes 
 
 Self-animating layers (no interaction required, all `aria-hidden`, all
 disabled or frozen under `prefers-reduced-motion`):
-- `EngineeringScene` — fixed canvas behind everything: parallax blueprint grids, procedural PCB traces with traveling signal pulses, slow line-art gears. Accent hue cross-fades per section; colors flip for the light theme; rAF pauses on hidden tabs; dpr capped at 2.
+- `EngineeringScene` — fixed canvas behind everything: a full PCB with IC packages (pin rows, pin-1 dots, silkscreen designators), resistors/capacitors, traces routed out of chip pins ending in vias, electrons trailing binary data streams, parallax blueprint grids and slow gears. Components near the cursor glow brighter and clicks inject data-packet bursts; a center radial mask erases the board behind the page content so it stays bold without fighting text. Accent hue cross-fades per section; colors flip for light theme; rAF pauses on hidden tabs; dpr capped at 2.
 - CSS keyframes in `globals.css` — aurora blobs, film grain, award shine sweep, hero scan line, timeline rail growth, node pulse rings.
 - `DecoderText` — the hero name decodes from scrambled glyphs on mount.
 - `WorkLifeCinema` — the Work Life section plays as a letterboxed projection: machine silhouettes on a conveyor, a gliding stage spotlight, a payload riding the belt, and PowerPoint-style auto-advancing slides with a pause control.
