@@ -45,7 +45,7 @@ export type Stage = {
   Icon: (props: SVGProps<SVGSVGElement>) => ReactElement;
 };
 
-export type TrackId = "process" | "software" | "hardware";
+export type TrackId = "cathode" | "process" | "software" | "hardware";
 
 export type Track = {
   id: TrackId;

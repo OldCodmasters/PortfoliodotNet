@@ -659,6 +659,13 @@ const PROCESS_STAGES: Stage[] = [
 
 const TRACKS: Track[] = [
   {
+    id: "cathode",
+    label: "Cell — Cathode",
+    subtitle: "Tesla · present",
+    intro: "",
+    stages: [],
+  },
+  {
     id: "process",
     label: "Process Technician",
     subtitle: "PCBA / SMT manufacturing line",

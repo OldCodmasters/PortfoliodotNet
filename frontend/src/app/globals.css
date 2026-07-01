@@ -374,6 +374,22 @@
       0 0 0 1px rgba(255, 255, 255, 0.06) inset,
       0 24px 48px -24px rgba(14, 16, 21, 0.45);
   }
+  /* The screen stays dark on the light theme, so the global light-mode
+     white→dark flips must NOT reach inside it — otherwise slide titles,
+     reel numbers, control glyphs and unselected-station chrome turn
+     dark-on-dark and vanish. Restore the on-screen palette to light.
+     Higher specificity + !important beats the global overrides. */
+  [data-theme="light"] .cinema-screen.text-white,
+  [data-theme="light"] .cinema-screen .text-white      { color: #fff !important; }
+  [data-theme="light"] .cinema-screen .text-white\/15  { color: rgba(255, 255, 255, 0.15) !important; }
+  [data-theme="light"] .cinema-screen .text-white\/25  { color: rgba(255, 255, 255, 0.25) !important; }
+  [data-theme="light"] .cinema-screen .text-white\/40  { color: rgba(255, 255, 255, 0.4)  !important; }
+  [data-theme="light"] .cinema-screen .text-white\/60  { color: rgba(255, 255, 255, 0.6)  !important; }
+  [data-theme="light"] .cinema-screen .hover\:text-white:hover { color: #fff !important; }
+  [data-theme="light"] .cinema-screen .border-white\/10 { border-color: rgba(255, 255, 255, 0.1)  !important; }
+  [data-theme="light"] .cinema-screen .border-white\/15 { border-color: rgba(255, 255, 255, 0.15) !important; }
+  [data-theme="light"] .cinema-screen .bg-white\/10    { background-color: rgba(255, 255, 255, 0.1)  !important; }
+  [data-theme="light"] .cinema-screen .bg-white\/15    { background-color: rgba(255, 255, 255, 0.15) !important; }
   /* Letterbox bars — the screen is always widescreen. */
   .cinema-screen::before,
   .cinema-screen::after {

@@ -20,6 +20,7 @@ import { STATION_SILHOUETTES } from "./MachineSilhouettes";
 const SLIDE_MS = 9000;
 
 const TRACK_TINT: Record<TrackId, string> = {
+  cathode: "#e82127",
   process: "#5be4d3",
   software: "#7aa2ff",
   hardware: "#c79bff",
@@ -37,13 +38,18 @@ export function WorkLifeCinema({
   onExplore: (key: string) => void;
 }) {
   const stages = track.stages;
+  const isEmpty = stages.length === 0;
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
-  const stage = stages[Math.min(idx, stages.length - 1)];
+  // `stage` is null for a track with nothing to show yet (e.g. a current
+  // role that isn't documented) — the screen renders a "Currently Working"
+  // card instead of the film.
+  const stage = isEmpty ? null : stages[Math.min(idx, stages.length - 1)];
   const tint = TRACK_TINT[track.id];
 
   const select = useCallback(
     (i: number) => {
+      if (stages.length === 0) return;
       setIdx(((i % stages.length) + stages.length) % stages.length);
     },
     [stages.length],
@@ -110,13 +116,14 @@ export function WorkLifeCinema({
         <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-(--color-foreground-subtle)">
           Reel{" "}
           <span className="text-(--color-foreground-muted)">
-            {String(idx + 1).padStart(2, "0")}
+            {isEmpty ? "—" : String(idx + 1).padStart(2, "0")}
           </span>
-          /{String(stages.length).padStart(2, "0")}
+          /{isEmpty ? "—" : String(stages.length).padStart(2, "0")}
         </span>
       </div>
 
       {/* ── The screen ───────────────────────────────────────────────── */}
+      {stage ? (
       <div className="cinema-screen flex min-h-0 flex-1 flex-col text-white">
         {/* Slide titles — crossfade in place like film title cards. The
             container has a fixed height and the cards are absolutely
@@ -232,6 +239,36 @@ export function WorkLifeCinema({
           </span>
         </div>
       </div>
+      ) : (
+        // Undocumented / in-progress track (e.g. a current role): the
+        // screen holds a single "Currently Working" card, not the film.
+        <div className="cinema-screen relative flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center text-white sm:py-24">
+          <p
+            className="font-mono text-[10px] uppercase tracking-[0.3em] sm:text-[11px]"
+            style={{ color: tint }}
+          >
+            {track.subtitle}
+          </p>
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2.5 w-2.5">
+              <span
+                className="absolute inline-flex h-full w-full animate-ping rounded-full"
+                style={{ background: tint, opacity: 0.75 }}
+              />
+              <span
+                className="relative inline-flex h-2.5 w-2.5 rounded-full"
+                style={{ background: tint }}
+              />
+            </span>
+            <h3 className="text-2xl font-semibold tracking-tight sm:text-4xl">
+              Currently Working
+            </h3>
+          </div>
+          <p className="max-w-md text-xs leading-relaxed text-white/60 sm:text-sm">
+            This reel is still being shot.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
